@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+{% block title %}{{ course.course_code }} – {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<style>
+  /* ─── Layout ─────────────────────────────── */
+  .cd-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 24px;
+  }
+  .cd-main::-webkit-scrollbar { width: 0; }
+
+  .cd-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-bottom: 24px;
+  }
+  .cd-sidebar::-webkit-scrollbar { width: 3px; }
+  .cd-sidebar::-webkit-scrollbar-thumb { background: #d8ccd8; border-radius: 3px; }
+
+  /* ─── Course Hero Header ─────────────────── */
+  .course-hero {
+    background: var(--card-bg);
+    border-radius: 22px;
+    padding: 22px 24px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .hero-identity { display: flex; align-items: center; gap: 14px; }
+
+  .hero-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    background: var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: white;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(139,136,200,0.35);
+  }
+
+  .hero-text { flex: 1; min-width: 0; }
+  .hero-code {
+    font-size: 11px; font-weight: 700;
+    color: var(--purple);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 3px;
+  }
+  .hero-name {
+    font-size: 19px; font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .hero-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .hero-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .hero-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .btn-add  { background: var(--purple); color: white; box-shadow: 0 4px 10px rgba(139,136,200,0.3); }
+  .btn-back { background: var(--card-bg2); color: var(--text-dark); }
+
+  /* Progress bar row */
+  .hero-progress {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .prog-stat {
+    background: var(--card-bg2);
+    border-radius: 14px;
+    padding: 11px 14px;
+    text-align: center;
+  }
+  .prog-stat-num {
+    font-size: 20px; font-weight: 800;
+    color: var(--text-dark); line-height: 1;
+    margin-bottom: 3px;
+  }
+  .prog-stat-label { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+
+  .progress-row { display: flex; flex-direction: column; gap: 6px; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+  }
+  .progress-track {
+    height: 8px; background: var(--card-bg2);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ─── Section title ──────────────────────── */
+  .section-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text-dark); margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--card-bg2);
+  }
+
+  /* ─── Task Cards ─────────────────────────── */
+  .task-card {
+    background: var(--card-bg);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1.5px solid var(--card-bg2);
+    margin-bottom: 12px;
+    animation: fadeUp 0.4s ease both;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .task-card:hover { border-color: var(--pink); box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+  .task-card:last-child { margin-bottom: 0; }
+
+  /* Coloured left accent bar */
+  .task-card-inner {
+    display: flex;
+    gap: 0;
+  }
+
+  .task-accent {
+    width: 5px;
+    flex-shrink: 0;
+    border-radius: 0;
+  }
+
+  .task-body {
+    flex: 1;
+    padding: 16px 18px;
+    min-width: 0;
+  }
+
+  .task-top-row {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .task-title {
+    font-size: 14px; font-weight: 700;
+    color: var(--text-dark); margin: 0 0 4px;
+  }
+
+  .task-deadline {
+    font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .deadline-pill {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 9px; border-radius: 20px;
+  }
+  .pill-red    { background: #f5d5da; color: #c06070; }
+  .pill-yellow { background: #fdf0d0; color: #a07820; }
+  .pill-green  { background: #d5eedd; color: #3a8050; }
+
+  .status-badge {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .status-done       { background: #d5eedd; color: #3a8050; }
+  .status-inprogress { background: #ddd8f5; color: #6b68a8; }
+  .status-notstarted { background: var(--card-bg2); color: var(--text-muted); }
+
+  /* Effort bar inside task */
+  .effort-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .effort-track {
+    flex: 1; height: 5px;
+    background: var(--card-bg2); border-radius: 3px; overflow: hidden;
+  }
+  .effort-fill { height: 100%; border-radius: 3px; }
+
+  .effort-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted); white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* Log work form */
+  .log-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    background: var(--card-bg2);
+    border-radius: 12px;
+  }
+
+  .log-input {
+    flex: 1;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(139,136,200,0.2);
+    background: var(--card-bg);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .log-input:focus { border-color: var(--purple); }
+  .log-input::placeholder { color: #c8b8c8; }
+
+  .log-btn {
+    padding: 7px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--purple);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .log-btn:hover { background: #6b68a8; transform: translateY(-1px); }
+
+  .task-actions {
+    display: flex; gap: 6px;
+    margin-left: auto; flex-shrink: 0;
+  }
+
+  .icon-btn {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .icon-btn:hover { transform: scale(1.1); }
+  .icon-edit   { background: #ddd8f5; color: #6b68a8; }
+  .icon-delete { background: #f5d5da; color: #c06070; }
+
+  /* Empty state */
+  .empty-tasks {
+    text-align: center; padding: 50px 20px;
+    color: var(--text-muted);
+  }
+  .empty-tasks .emoji { font-size: 40px; margin-bottom: 12px; }
+  .empty-tasks p { font-size: 13px; margin: 0 0 14px; }
+
+  /* ─── Sidebar cards ──────────────────────── */
+  .side-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .side-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text-dark); margin: 0 0 14px;
+  }
+
+  /* Summary stats */
+  .summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 14px;
+  }
+
+  .sum-box {
+    background: var(--card-bg2); border-radius: 12px;
+    padding: 12px 10px; text-align: center;
+  }
+  .sum-num { font-size: 20px; font-weight: 800; color: var(--text-dark); line-height: 1; margin-bottom: 3px; }
+  .sum-label { font-size: 10px; color: var(--text-muted); }
+
+  .effort-highlight {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border-radius: 14px; padding: 14px;
+    text-align: center; color: white;
+  }
+  .effort-highlight .num { font-size: 28px; font-weight: 800; line-height: 1; }
+  .effort-highlight .lbl { font-size: 11px; opacity: 0.85; margin-top: 3px; }
+
+  /* Work log history */
+  .log-history { display: flex; flex-direction: column; gap: 8px; }
+
+  .log-entry {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    background: var(--card-bg2); border-radius: 12px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .log-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--purple); flex-shrink: 0;
+  }
+
+  .log-info { flex: 1; }
+  .log-date  { font-size: 10px; color: var(--text-muted); }
+  .log-hours { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+
+  .log-badge {
+    font-size: 10px; font-weight: 600;
+    background: var(--card-bg); color: var(--purple);
+    padding: 2px 8px; border-radius: 20px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-card:nth-child(1) { animation-delay: 0.05s; }
+  .task-card:nth-child(2) { animation-delay: 0.10s; }
+  .task-card:nth-child(3) { animation-delay: 0.15s; }
+  .task-card:nth-child(4) { animation-delay: 0.20s; }
+  .side-card:nth-child(1) { animation-delay: 0.08s; }
+  .side-card:nth-child(2) { animation-delay: 0.14s; }
+  .side-card:nth-child(3) { animation-delay: 0.20s; }
+</style>
+
+{# ── Computed values ─────────────────────────────────────── #}
+{% set total_tasks     = tasks | length %}
+{% set done_tasks      = tasks | selectattr('remaining_effort_hours', 'equalto', 0) | list | length %}
+{% set remaining_tasks = total_tasks - done_tasks %}
+{% set total_effort    = tasks | sum(attribute='remaining_effort_hours') %}
+{% set pct_done        = ((done_tasks / total_tasks) * 100) | round | int if total_tasks > 0 else 0 %}
+{% set accent_colors   = ['#8b88c8','#c9b8c8','#e8c46a','#a8c8a8','#d9a3b3'] %}
+
+<!-- ── LEFT: main ── -->
+<div class="cd-main">
+
+  <!-- Course Hero -->
+  <div class="course-hero">
+    <div class="hero-top">
+      <div class="hero-identity">
+        <div class="hero-icon">{{ course.course_name[0].upper() }}</div>
+        <div class="hero-text">
+          <div class="hero-code">{{ course.course_code }}</div>
+          <h2 class="hero-name">{{ course.course_name }}</h2>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="{{ url_for('add_task') }}" class="hero-btn btn-add">✏️ Add Task</a>
+        <a href="{{ url_for('courses') }}" class="hero-btn btn-back">← Back</a>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="hero-progress">
+      <div class="prog-stat">
+        <div class="prog-stat-num">{{ total_tasks }}</div>
+        <div class="prog-stat-label">Total Tasks</div>
+      </div>
+      <div class="prog-stat">
+        <div class="prog-stat-num" style="color:var(--purple);">{{ done_tasks }}</div>
+        <div class="prog-stat-label">Completed</div>
+      </div>
+      <div class="prog-stat">
+        <div class="prog-stat-num" style="color:var(--pink);">{{ remaining_tasks }}</div>
+        <div class="prog-stat-label">Remaining</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-row">
+      <div class="progress-label">
+        <span>Course Progress</span>
+        <span>{{ pct_done }}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:{{ pct_done }}%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task list -->
+  <p class="section-title">Tasks</p>
+
+  {% if tasks %}
+    {% for task in tasks | sort(attribute='deadline') %}
+      {% set days_left = (task.deadline - today).days %}
+      {% set done = task.remaining_effort_hours == 0 %}
+      {% set pct_task = (((task.total_effort_hours - task.remaining_effort_hours) / task.total_effort_hours) * 100) | round | int if task.total_effort_hours > 0 else 0 %}
+
+      <div class="task-card" style="animation-delay:{{ 0.05 + loop.index0 * 0.06 }}s">
+        <div class="task-card-inner">
+          <div class="task-accent" style="background:{{ accent_colors[loop.index0 % 5] }};"></div>
+          <div class="task-body">
+
+            <div class="task-top-row">
+              <div>
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-deadline">
+                  📅 Due {{ task.deadline.strftime('%d %b %Y') }}
+                  {% if done %}
+                    <span class="deadline-pill pill-green">✓ done</span>
+                  {% elif days_left < 0 %}
+                    <span class="deadline-pill pill-red">⚠ overdue</span>
+                  {% elif days_left <= 3 %}
+                    <span class="deadline-pill pill-yellow">{{ days_left }}d left</span>
+                  {% else %}
+                    <span class="deadline-pill pill-green">{{ days_left }}d left</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                {% if done %}
+                  <span class="status-badge status-done">Completed</span>
+                {% elif task.remaining_effort_hours < task.total_effort_hours %}
+                  <span class="status-badge status-inprogress">In Progress</span>
+                {% else %}
+                  <span class="status-badge status-notstarted">Not Started</span>
+                {% endif %}
+                <div class="task-actions">
+                  <a href="{{ url_for('edit_task', task_id=task.id) }}" class="icon-btn icon-edit" title="Edit">✎</a>
+                  <a href="{{ url_for('delete_task', task_id=task.id) }}" class="icon-btn icon-delete" title="Delete"
+                     onclick="return confirm('Delete this task?')">🗑</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Effort progress bar -->
+            <div class="effort-row">
+              <div class="effort-track">
+                <div class="effort-fill" style="width:{{ pct_task }}%; background:{{ accent_colors[loop.index0 % 5] }};"></div>
+              </div>
+              <span class="effort-label">{{ task.remaining_effort_hours }}h left of {{ task.total_effort_hours }}h</span>
+            </div>
+
+            <!-- Suggested daily effort -->
+            {% if not done %}
+              {% if days_left > 0 %}
+                {% set daily = (task.remaining_effort_hours / days_left) | round(2) %}
+                {% set overload = daily > 4 %}
+              {% else %}
+                {% set daily = task.remaining_effort_hours %}
+                {% set overload = true %}
+              {% endif %}
+              <div class="daily-effort-row" style="
+                background: {% if overload %}#f5d5da{% elif daily > 2 %}#fdf0d0{% else %}#d5eedd{% endif %};
+                border-radius: 10px; padding: 8px 12px;
+                display: flex; align-items: center; gap: 8px;
+                margin-bottom: 10px;
+              ">
+                <span style="font-size:14px;">{% if overload %}⚠️{% elif daily > 2 %}⏳{% else %}✅{% endif %}</span>
+                <div style="flex:1;">
+                  <span style="font-size:11px; font-weight:700;
+                    color: {% if overload %}#c06070{% elif daily > 2 %}#a07820{% else %}#3a8050{% endif %};">
+                    Suggested: {{ daily }}h/day
+                  </span>
+                  <span style="font-size:10px; color:var(--text-muted); margin-left:6px;">
+                    ({{ days_left if days_left >= 0 else 0 }} day{{ 's' if days_left != 1 }} remaining)
+                  </span>
+                </div>
+                {% if overload %}
+                  <span style="font-size:10px; font-weight:600; color:#c06070;">High load!</span>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Log work form -->
+            {% if not done %}
+            <form method="POST" action="{{ url_for('log_progress', task_id=task.id) }}">
+              <div class="log-row">
+                <span style="font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap;">Log work:</span>
+                <input class="log-input" type="number" step="0.1" min="0.1"
+                       name="hours_logged" placeholder="Hours worked" required>
+                <button class="log-btn" type="submit">Submit</button>
+              </div>
+            </form>
+            {% else %}
+            <div class="log-row" style="justify-content:center;">
+              <span style="font-size:12px; color:#3a8050; font-weight:600;">🎉 Task completed!</span>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <div class="empty-tasks">
+      <div class="emoji">📋</div>
+      <p>No tasks for this course yet.</p>
+      <a href="{{ url_for('add_task') }}" class="hero-btn btn-add" style="display:inline-flex;">✏️ Add First Task</a>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- ── RIGHT: sidebar ── -->
+<div class="cd-sidebar">
+
+  <!-- Course Summary -->
+  <div class="side-card" style="animation-delay:0.08s">
+    <p class="side-title">Course Summary</p>
+    <div class="summary-grid">
+      <div class="sum-box">
+        <div class="sum-num">{{ total_tasks }}</div>
+        <div class="sum-label">Total Tasks</div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-num" style="color:var(--purple);">{{ done_tasks }}</div>
+        <div class="sum-label">Completed</div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-num" style="color:var(--pink);">{{ remaining_tasks }}</div>
+        <div class="sum-label">Remaining</div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-num" style="color:var(--gold);">{{ pct_done }}%</div>
+        <div class="sum-label">Progress</div>
+      </div>
+    </div>
+    <div class="effort-highlight">
+      <div class="num">{{ total_effort }}h</div>
+      <div class="lbl">Total Remaining Effort</div>
+    </div>
+    {% set active_tasks = tasks | rejectattr('remaining_effort_hours', 'equalto', 0) | list %}
+    {% if active_tasks %}
+      {% set avg_daily = namespace(val=0) %}
+      {% for task in active_tasks %}
+        {% set dl = (task.deadline - today).days %}
+        {% if dl > 0 %}
+          {% set avg_daily.val = avg_daily.val + (task.remaining_effort_hours / dl) %}
+        {% else %}
+          {% set avg_daily.val = avg_daily.val + task.remaining_effort_hours %}
+        {% endif %}
+      {% endfor %}
+      <div style="margin-top:10px; background:var(--card-bg2); border-radius:12px; padding:12px; text-align:center;">
+        <div style="font-size:20px; font-weight:800; color:var(--text-dark); line-height:1; margin-bottom:3px;">
+          {{ avg_daily.val | round(1) }}h
+        </div>
+        <div style="font-size:10px; color:var(--text-muted);">Combined daily effort needed</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Work Log History -->
+  <div class="side-card" style="animation-delay:0.14s">
+    <p class="side-title">Work Log</p>
+    {% set all_logs = [] %}
+    {% for task in tasks %}
+      {% for log in task.progress_logs %}
+        {% set _ = all_logs.append({'task': task.title, 'log': log}) %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if all_logs %}
+      <div class="log-history">
+        {% for entry in all_logs[-6:] | reverse %}
+        <div class="log-entry" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+          <div class="log-dot"></div>
+          <div class="log-info">
+            <div class="log-hours">{{ entry.task | truncate(20, True, '…') }}</div>
+            <div class="log-date">
+              {% if entry.log.logged_at is defined %}
+                {{ entry.log.logged_at.strftime('%d %b %Y') }}
+              {% else %}
+                Logged
+              {% endif %}
+            </div>
+          </div>
+          <span class="log-badge">{{ entry.log.effort_completed_hours }}h</span>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="font-size:12px; color:var(--text-muted); text-align:center; padding:16px 0;">
+        No work logged yet.<br>Start tracking your progress above!
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="side-card" style="animation-delay:0.20s">
+    <p class="side-title">Quick Actions</p>
+    <a href="{{ url_for('add_task') }}" class="hero-btn btn-add" style="width:100%; justify-content:center; margin-bottom:8px; border-radius:12px;">
+      ✏️ Add New Task
+    </a>
+    <a href="{{ url_for('courses') }}" class="hero-btn btn-back" style="width:100%; justify-content:center; border-radius:12px;">
+      📚 All Courses
+    </a>
+  </div>
+
+</div>
+
+<script>
+  // Animate progress bars on load
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.progress-fill, .effort-fill').forEach(el => {
+      const w = el.style.width;
+      el.style.width = '0%';
+      setTimeout(() => { el.style.width = w; }, 100);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}My Classes{% endblock %}
+
+{% block content %}
+
+<style>
+  .courses-main {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 28px 28px 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .courses-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .courses-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  .add-course-link {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+  .add-course-link:hover { color: var(--purple); }
+
+  .filter-tabs {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--card-bg2);
+  }
+
+  .filter-tab {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding-bottom: 10px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+    user-select: none;
+  }
+
+  .filter-tab.active {
+    color: var(--text-dark);
+    border-bottom-color: var(--purple);
+  }
+
+  .filter-tab:hover:not(.active) { color: var(--text-dark); }
+
+  .course-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 4px;
+    padding-bottom: 12px;
+  }
+
+  .course-list::-webkit-scrollbar { width: 4px; }
+  .course-list::-webkit-scrollbar-thumb { background: var(--card-bg2); border-radius: 4px; }
+
+  .course-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--card-bg2);
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+    animation: rowIn 0.4s ease both;
+    background: var(--card-bg);
+  }
+
+  .course-row:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    transform: translateY(-1px);
+    border-color: var(--pink);
+  }
+
+  .course-thumb {
+    width: 80px;
+    height: 72px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .course-thumb::before, .course-thumb::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .course-thumb::before { width: 50px; height: 50px; top: -15px; right: -10px; }
+  .course-thumb::after  { width: 35px; height: 35px; bottom: -10px; left: -8px; }
+
+  /* Thumb colours updated to match theme palette */
+  .course-row:nth-child(5n+1) .course-thumb { background: #c8c5f0; }
+  .course-row:nth-child(5n+2) .course-thumb { background: #e8d0e8; }
+  .course-row:nth-child(5n+3) .course-thumb { background: #f5e6c0; }
+  .course-row:nth-child(5n+4) .course-thumb { background: #f5ccd4; }
+  .course-row:nth-child(5n+5) .course-thumb { background: #c8e0f0; }
+
+  .thumb-letter {
+    position: relative;
+    z-index: 1;
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: rgba(0,0,0,0.18);
+  }
+
+  .course-info { flex: 1; min-width: 0; }
+
+  .course-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .course-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .course-tag {
+    display: inline-block;
+    background: var(--card-bg2);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .open-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--card-bg2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .course-row:hover .open-btn { background: var(--purple); }
+  .open-btn svg { transition: stroke 0.2s; stroke: var(--text-muted); }
+  .course-row:hover .open-btn svg { stroke: white; }
+
+  .empty-courses {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 10px;
+    padding: 40px 0;
+  }
+  .empty-courses span { font-size: 40px; }
+  .empty-courses p { font-size: 13px; margin: 0; }
+
+  /* Right sidebar */
+  .courses-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .courses-sidebar::-webkit-scrollbar { width: 0; }
+
+  .panel-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 14px;
+  }
+
+  .stats-row { display: flex; gap: 10px; }
+
+  .stat-box {
+    flex: 1;
+    background: var(--card-bg2);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+
+  .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dark);
+    background: var(--card-bg2);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .action-btn:hover { background: #ddd0dc; transform: translateX(2px); }
+
+  .action-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .activity-list { display: flex; flex-direction: column; gap: 10px; }
+  .activity-item { display: flex; align-items: center; gap: 10px; }
+
+  .activity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .activity-text { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .activity-text strong { color: var(--text-dark); font-weight: 600; }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .course-row:nth-child(1) { animation-delay: 0.05s; }
+  .course-row:nth-child(2) { animation-delay: 0.10s; }
+  .course-row:nth-child(3) { animation-delay: 0.15s; }
+  .course-row:nth-child(4) { animation-delay: 0.20s; }
+  .course-row:nth-child(5) { animation-delay: 0.25s; }
+  .course-row:nth-child(6) { animation-delay: 0.30s; }
+</style>
+
+<!-- Left: course list -->
+<div class="courses-main">
+  <div class="courses-header">
+    <h2 class="courses-title">My Classes</h2>
+    <a href="{{ url_for('add_course') }}" class="add-course-link">
+      + Add course
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2.5 6h7M6 2.5l3.5 3.5L6 9.5"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="filter-tabs">
+    <div class="filter-tab active" onclick="setTab(this)">All</div>
+    <div class="filter-tab" onclick="setTab(this)">Recent</div>
+  </div>
+
+  <div class="course-list">
+    {% for course in courses %}
+    <a href="{{ url_for('course_detail', course_id=course.id) }}" class="course-row">
+      <div class="course-thumb">
+        <span class="thumb-letter">{{ course.course_name[0] | upper }}</span>
+      </div>
+      <div class="course-info">
+        <div class="course-name">{{ course.course_name }}</div>
+        <div class="course-meta">{{ course.course_code }}</div>
+        <span class="course-tag">{{ course.course_code }}</span>
+      </div>
+      <div class="open-btn">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 6h7M6 2.5l3.5 3.5L6 9.5"/>
+        </svg>
+      </div>
+    </a>
+    {% endfor %}
+
+    {% if not courses %}
+    <div class="empty-courses">
+      <span>📚</span>
+      <p>No classes yet. Add your first course!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Right: sidebar panels -->
+<div class="courses-sidebar">
+
+  <div class="panel-card">
+    <p class="panel-title">Overview</p>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-number">{{ courses | length }}</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" style="color:var(--purple);">{{ courses | length }}</div>
+        <div class="stat-label">Active</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-card">
+    <p class="panel-title">Quick Actions</p>
+    <div class="quick-actions">
+      <a href="{{ url_for('add_course') }}" class="action-btn">
+        <div class="action-icon" style="background:#ddd8f5;">📖</div>
+        Add New Course
+      </a>
+      <a href="{{ url_for('add_task') }}" class="action-btn">
+        <div class="action-icon" style="background:#f0ddf0;">✏️</div>
+        Add New Task
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="action-btn">
+        <div class="action-icon" style="background:#f5ecd8;">📊</div>
+        Go to Dashboard
+      </a>
+    </div>
+  </div>
+
+  {% if courses %}
+  <div class="panel-card">
+    <p class="panel-title">Enrolled</p>
+    <div class="activity-list">
+      {% set dot_colors = ['#8b88c8','#c9b8c8','#e8c46a','#a8c8a8','#d9a3b3'] %}
+      {% for course in courses %}
+      <div class="activity-item">
+        <div class="activity-dot" style="background:{{ dot_colors[loop.index0 % 5] }};"></div>
+        <div class="activity-text">
+          <strong>{{ course.course_name }}</strong><br>
+          {{ course.course_code }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function setTab(el) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+{% endblock %}

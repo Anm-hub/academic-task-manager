@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Add Task{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* Page Layout */
+.add-task-container{
+display:grid;
+grid-template-columns:1.2fr 0.8fr;
+height:100%;
+gap:30px;
+}
+
+/* FORM CARD */
+
+.form-card{
+background:#ffffff;
+border-radius:20px;
+padding:32px;
+max-width:500px;
+width:100%;
+box-shadow:0 10px 40px rgba(0,0,0,0.06);
+margin:auto;
+}
+
+.form-card h2{
+font-size:22px;
+margin-bottom:6px;
+}
+
+.form-subtitle{
+font-size:13px;
+color:#888;
+margin-bottom:25px;
+}
+
+/* INPUTS */
+
+.field-group{
+margin-bottom:18px;
+}
+
+.field-label{
+display:block;
+font-size:12px;
+font-weight:600;
+margin-bottom:6px;
+color:#555;
+}
+
+.field-input,
+.field-select,
+.field-textarea{
+width:100%;
+padding:11px 14px;
+border-radius:10px;
+border:1.5px solid #e9e4dd;
+background:#faf8f5;
+font-size:13px;
+font-family:'Poppins',sans-serif;
+outline:none;
+transition:all 0.2s;
+}
+
+.field-input:focus,
+.field-select:focus,
+.field-textarea:focus{
+border-color:#928fce;
+background:#fff;
+box-shadow:0 0 0 3px rgba(146,143,206,0.12);
+}
+
+.field-textarea{
+height:90px;
+resize:none;
+}
+
+/* TWO COLUMN ROW */
+
+.field-row{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+/* BUTTONS */
+
+.form-actions{
+display:flex;
+gap:10px;
+margin-top:24px;
+}
+
+.btn-reset{
+flex:1;
+padding:12px;
+border-radius:10px;
+border:1px solid #e6e1da;
+background:#fff;
+font-size:12px;
+cursor:pointer;
+}
+
+.btn-submit{
+flex:2;
+padding:12px;
+border-radius:10px;
+border:none;
+background:#928fce;
+color:white;
+font-weight:600;
+font-size:12px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.btn-submit:hover{
+background:#7d79c2;
+}
+
+/* RIGHT PANEL */
+
+.side-panel{
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+background:#ffffff;
+border-radius:20px;
+padding:30px;
+box-shadow:0 6px 20px rgba(0,0,0,0.04);
+}
+
+.side-panel h3{
+margin-bottom:10px;
+}
+
+.side-panel p{
+font-size:13px;
+color:#888;
+line-height:1.6;
+}
+
+</style>
+
+<div class="add-task-container">
+
+<!-- LEFT: FORM -->
+
+<div class="form-card">
+
+<h2>Add New Task</h2>
+<div class="form-subtitle">Break your work into manageable tasks</div>
+
+<form method="POST">
+
+<div class="field-group">
+<label class="field-label">Task Title</label>
+<input class="field-input" name="title" type="text" placeholder="Example: Write literature review" required>
+</div>
+
+<div class="field-group">
+<label class="field-label">Description</label>
+<textarea class="field-textarea" name="description" placeholder="Optional notes about the task"></textarea>
+</div>
+
+<div class="field-row">
+
+<div class="field-group">
+<label class="field-label">Deadline</label>
+<input class="field-input" name="deadline" type="date" required>
+</div>
+
+<div class="field-group">
+<label class="field-label">Effort (hours)</label>
+<input class="field-input" name="total_effort_hours" type="number" step="0.5" min="0.5" required>
+</div>
+
+</div>
+
+<div class="field-group">
+<label class="field-label">Course</label>
+
+<select class="field-select" name="course_id" required>
+
+<option value="" disabled selected>Select course</option>
+
+{% for course in courses %}
+
+<option value="{{ course.id }}">
+{{ course.course_code }} — {{ course.course_name }}
+</option>
+{% endfor %}
+
+</select>
+
+</div>
+
+<div class="form-actions">
+<button type="reset" class="btn-reset">Reset</button>
+<button type="submit" class="btn-submit">Add Task</button>
+</div>
+
+</form>
+
+</div>
+
+<!-- RIGHT SIDE PANEL -->
+
+<div class="side-panel">
+
+<div>
+
+<h3>Stay Organized</h3>
+
+<p>
+Adding tasks allows the system to track your workload,
+calculate your remaining effort, and help you distribute
+your study time before the deadline.
+</p>
+
+<p style="margin-top:15px;">
+Tip: Break large assignments into smaller tasks to
+reduce stress and improve planning.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

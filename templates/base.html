@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}êCoursie{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Main accent — matches login button #7b78b8 */
+            --purple: #8b88c8;
+            /* Soft secondary accents */
+            --pink: #c9b8c8;
+            --gold: #e8c46a;
+            /* Backgrounds — matches login body/form palette */
+            --bg-main:    #ede8e3;
+            --card-bg:    #faf5f0;
+            --card-bg2:   #e8dde8;
+            --sidebar-bg: #ddd0dc;
+            /* Text */
+            --text-dark:  #2d1f2c;
+            --text-muted: #a090a0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        nav {
+            width: 200px;
+            background-color: var(--sidebar-bg);
+            padding: 30px 15px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .logo { font-size: 22px; font-weight: 700; color: #3d2b3c; margin-bottom: 25px; text-align: center; }
+
+        .user-profile { text-align: center; margin-bottom: 30px; }
+        .user-profile div:first-child {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--purple);
+            margin: 0 auto 10px;
+        }
+
+        .nav-links { flex-grow: 1; }
+
+        .nav-item {
+            display: flex; align-items: center; padding: 10px 15px;
+            color: #5a3d59; text-decoration: none; border-radius: 12px;
+            margin-bottom: 5px; font-size: 13px;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .nav-item:hover { transform: translateX(3px); }
+        .nav-item.active { background: var(--purple); color: white; font-weight: 600; }
+        .nav-item:hover:not(.active) { background: rgba(139,136,200,0.15); }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 260px;
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h4 { margin: 0 0 10px 0; font-size: 15px; }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated and request.endpoint not in ['login','register'] %}
+    <nav>
+        <div class="logo">Smartech</div>
+        <div class="user-profile">
+            <div></div>
+            <div style="font-weight:600; font-size: 14px; color: #3d2b3c;">{{ current_user.username }}</div>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}" class="nav-item active">Dashboard</a>
+            <a href="{{ url_for('courses') }}" class="nav-item">My classes</a>
+            <a href="{{ url_for('schedule') }}" class="nav-item">Schedule</a>
+            <a href="{{ url_for('settings') }}" class="nav-item">Settings</a>
+        </div>
+        <a href="{{ url_for('logout') }}" class="nav-item">Log out</a>
+    </nav>
+    {% endif %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

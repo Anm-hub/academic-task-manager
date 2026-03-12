@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+{% block title %}Schedule{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Left: main schedule area ── */
+  .sched-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 20px;
+  }
+  .sched-main::-webkit-scrollbar { width: 0; }
+
+  /* Page header */
+  .sched-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .sched-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .sched-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .add-task-btn {
+    background: var(--purple);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 12px rgba(139,136,200,0.3);
+  }
+  .add-task-btn:hover { background: #6b68a8; transform: translateY(-1px); }
+
+  /* ── Weekly calendar strip ── */
+  .week-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .week-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .week-nav {
+    display: flex;
+    gap: 6px;
+  }
+
+  .week-nav-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--card-bg2);
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .week-nav-btn:hover { background: var(--purple); color: white; }
+
+  .week-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+
+  .week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .day-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .day-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: var(--card-bg2);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .week-day.today .day-num {
+    background: var(--purple);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139,136,200,0.35);
+  }
+
+  .week-day.has-task .day-name { color: var(--purple); }
+
+  .day-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--pink);
+    opacity: 0;
+  }
+
+  .week-day.has-task .day-dot { opacity: 1; }
+  .week-day.today .day-dot { background: white; }
+
+  .week-day:hover .day-num:not(.today .day-num) {
+    background: #ddd0dc;
+  }
+
+  /* ── Task timeline ── */
+  .timeline-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    flex: 1;
+  }
+
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 16px;
+  }
+
+  .timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 18px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .timeline-item:last-child { padding-bottom: 0; }
+
+  .timeline-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 36px;
+  }
+
+  .tl-date-box {
+    width: 36px;
+    background: var(--card-bg2);
+    border-radius: 10px;
+    padding: 6px 4px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .tl-date-day { font-size: 16px; font-weight: 800; color: var(--text-dark); line-height: 1; }
+  .tl-date-mon { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .tl-line {
+    width: 2px;
+    flex: 1;
+    background: var(--card-bg2);
+    margin-top: 6px;
+    border-radius: 1px;
+    min-height: 20px;
+  }
+
+  .timeline-item:last-child .tl-line { display: none; }
+
+  .timeline-right {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  .tl-task-card {
+    background: var(--card-bg2);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .tl-task-card:hover { transform: translateX(3px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+
+  .tl-bar {
+    width: 4px;
+    height: 36px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .tl-info { flex: 1; min-width: 0; }
+  .tl-task-name { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+  .tl-task-sub  { font-size: 10px; color: var(--text-muted); }
+
+  .tl-hrs {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .empty-schedule {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ── Right sidebar ── */
+  .sched-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .sched-sidebar::-webkit-scrollbar { width: 0; }
+
+  .side-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .side-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 14px;
+  }
+
+  /* Upcoming deadlines panel */
+  .deadline-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: var(--card-bg2);
+    margin-bottom: 8px;
+    transition: transform 0.15s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .deadline-item:last-child { margin-bottom: 0; }
+  .deadline-item:hover { transform: translateX(2px); }
+
+  .dl-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+    flex-shrink: 0;
+  }
+
+  .dl-info { flex: 1; min-width: 0; }
+  .dl-name { font-size: 11px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl-date { font-size: 10px; color: var(--text-muted); }
+
+  .dl-badge {
+    font-size: 9px; font-weight: 600;
+    padding: 2px 7px; border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .badge-red    { background: #f5d5da; color: #c06070; }
+  .badge-yellow { background: #fdf0d0; color: #a07820; }
+  .badge-green  { background: #d5eedd; color: #3a8050; }
+
+  /* Workload summary */
+  .workload-stat {
+    background: var(--card-bg2);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .workload-stat:last-child { margin-bottom: 0; }
+
+  .wl-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .wl-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.1;
+  }
+
+  .wl-unit { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+
+  /* Workload bar */
+  .wl-bar-track {
+    height: 6px;
+    background: var(--card-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .wl-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--purple);
+    transition: width 0.6s ease;
+  }
+
+  .wl-bar-fill.warn  { background: var(--gold); }
+  .wl-bar-fill.alert { background: var(--pink); }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .timeline-item:nth-child(1) { animation-delay: 0.05s; }
+  .timeline-item:nth-child(2) { animation-delay: 0.10s; }
+  .timeline-item:nth-child(3) { animation-delay: 0.15s; }
+  .timeline-item:nth-child(4) { animation-delay: 0.20s; }
+  .deadline-item:nth-child(1) { animation-delay: 0.08s; }
+  .deadline-item:nth-child(2) { animation-delay: 0.14s; }
+  .deadline-item:nth-child(3) { animation-delay: 0.20s; }
+</style>
+
+<!-- ── LEFT: main ── -->
+<div class="sched-main">
+
+  <!-- Header -->
+  <div class="sched-header">
+    <div>
+      <h2 class="sched-title">Schedule</h2>
+      <div class="sched-date" id="todayLabel"></div>
+    </div>
+    <a href="{{ url_for('add_task') }}" class="add-task-btn">+ Add Task</a>
+  </div>
+
+  <!-- Weekly strip -->
+  <div class="week-card">
+    <div class="week-header">
+      <span class="week-label" id="weekRangeLabel"></span>
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">‹</button>
+        <button class="week-nav-btn" onclick="changeWeek(1)">›</button>
+      </div>
+    </div>
+    <div class="week-days" id="weekDays"></div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-card">
+    <p class="timeline-title">Task Timeline</p>
+    <div class="timeline-list">
+
+      {% set bar_colors = ['#8b88c8','#c9b8c8','#e8c46a','#a8c8a8','#d9a3b3'] %}
+
+      {% if tasks %}
+        {% for task in tasks | sort(attribute='deadline') %}
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="tl-date-box">
+              <div class="tl-date-day">{{ task.deadline.strftime('%d') }}</div>
+              <div class="tl-date-mon">{{ task.deadline.strftime('%b') }}</div>
+            </div>
+            <div class="tl-line"></div>
+          </div>
+          <div class="timeline-right">
+            <div class="tl-task-card">
+              <div class="tl-bar" style="background:{{ bar_colors[loop.index0 % 5] }};"></div>
+              <div class="tl-info">
+                <div class="tl-task-name">{{ task.title }}</div>
+                <div class="tl-task-sub">
+                  Due {{ task.deadline.strftime('%A, %d %b %Y') }}
+                </div>
+              </div>
+              <div class="tl-hrs">{{ task.remaining_effort_hours }}h left</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-schedule">
+          <div style="font-size:36px; margin-bottom:10px;">📅</div>
+          <p>No tasks scheduled yet.</p>
+          <a href="{{ url_for('add_task') }}" style="color:var(--purple); font-weight:600; font-size:12px;">Add your first task →</a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ── RIGHT: sidebar ── -->
+<div class="sched-sidebar">
+
+  <!-- Upcoming deadlines -->
+  <div class="side-card">
+    <p class="side-title">Upcoming Deadlines</p>
+
+    {% set avatar_colors = ['#8b88c8','#d9a3b3','#e8c46a','#a8c8a8','#c9b8c8'] %}
+
+    {% if tasks %}
+      {% for task in tasks | sort(attribute='deadline') | list %}
+        {% set days_left = (task.deadline - today).days %}
+        <div class="deadline-item" style="animation-delay:{{ loop.index0 * 0.06 }}s">
+          <div class="dl-avatar" style="background:{{ avatar_colors[loop.index0 % 5] }};">
+            {{ task.title[0].upper() }}
+          </div>
+          <div class="dl-info">
+            <div class="dl-name">{{ task.title | truncate(20, True, '…') }}</div>
+            <div class="dl-date">{{ task.deadline.strftime('%d %b %Y') }}</div>
+          </div>
+          {% if days_left < 0 %}
+            <span class="dl-badge badge-red">overdue</span>
+          {% elif days_left <= 3 %}
+            <span class="dl-badge badge-yellow">{{ days_left }}d</span>
+          {% else %}
+            <span class="dl-badge badge-green">{{ days_left }}d</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="font-size:12px; color:var(--text-muted);">No upcoming deadlines.</p>
+    {% endif %}
+  </div>
+
+  <!-- Workload summary -->
+  <div class="side-card">
+    <p class="side-title">This Week's Workload</p>
+
+    {% set total_hrs = tasks | sum(attribute='remaining_effort_hours') %}
+    {% set task_count = tasks | length %}
+    {% set daily = (total_hrs / 7) | round(1) %}
+    {% set pct = [total_hrs * 4, 100] | min %}
+
+    <div class="workload-stat">
+      <div class="wl-label">Total remaining work</div>
+      <div class="wl-value">{{ total_hrs }} <span class="wl-unit">hours</span></div>
+      <div class="wl-bar-track">
+        <div class="wl-bar-fill {% if total_hrs > 20 %}alert{% elif total_hrs > 10 %}warn{% endif %}"
+             style="width:{{ pct }}%;"></div>
+      </div>
+    </div>
+
+    <div class="workload-stat">
+      <div class="wl-label">Suggested daily effort</div>
+      <div class="wl-value">{{ daily }} <span class="wl-unit">hrs/day</span></div>
+      <div class="wl-bar-track">
+        <div class="wl-bar-fill {% if daily > 6 %}alert{% elif daily > 3 %}warn{% endif %}"
+             style="width:{{ [daily * 12, 100] | min }}%;"></div>
+      </div>
+    </div>
+
+    <div class="workload-stat">
+      <div class="wl-label">Tasks remaining</div>
+      <div class="wl-value">{{ task_count }} <span class="wl-unit">tasks</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Today label
+  const today = new Date();
+  const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const monthNames = ["January","February","March","April","May","June",
+                      "July","August","September","October","November","December"];
+  document.getElementById("todayLabel").textContent =
+    `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+
+  // Deadline days from Flask
+  const deadlineDays = new Set([
+    {% for task in tasks %}
+      {% if task.deadline %}"{{ task.deadline.strftime('%Y-%m-%d') }}",{% endif %}
+    {% endfor %}
+  ]);
+
+  // Week strip
+  const SHORT_DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  let weekOffset = 0;
+
+  function getWeekStart(offset) {
+    const d = new Date(today);
+    const day = d.getDay();
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+    monday.setHours(0,0,0,0);
+    return monday;
+  }
+
+  function fmt(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function renderWeek() {
+    const start = getWeekStart(weekOffset);
+    const end   = new Date(start); end.setDate(start.getDate() + 6);
+    const fmt2  = d => `${d.getDate()} ${monthNames[d.getMonth()]}`;
+    document.getElementById("weekRangeLabel").textContent =
+      `${fmt2(start)} – ${fmt2(end)} ${end.getFullYear()}`;
+
+    const container = document.getElementById("weekDays");
+    container.innerHTML = "";
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      const isToday = d.toDateString() === today.toDateString();
+      const hasTask = deadlineDays.has(fmt(d));
+
+      const col = document.createElement("div");
+      col.className = "week-day" + (isToday ? " today" : "") + (hasTask ? " has-task" : "");
+
+      col.innerHTML = `
+        <span class="day-name">${SHORT_DAYS[d.getDay()]}</span>
+        <div class="day-num">${d.getDate()}</div>
+        <div class="day-dot"></div>
+      `;
+      container.appendChild(col);
+    }
+  }
+
+  function changeWeek(dir) {
+    weekOffset += dir;
+    renderWeek();
+  }
+
+  renderWeek();
+</script>
+{% endblock %}

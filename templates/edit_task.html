@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block title %}Edit Task{% endblock %}
+
+{% block content %}
+<style>
+  /* Override main grid for centered form layout */
+  body > main {
+    display: flex !important;
+    grid-template-columns: unset !important;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .edit-wrap {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+    animation: cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  /* ─── Form card ─── */
+  .edit-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 28px 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+  }
+
+  .edit-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .edit-icon {
+    width: 42px; height: 42px;
+    border-radius: 14px;
+    background: var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(139,136,200,0.35);
+  }
+
+  .edit-title {
+    font-size: 20px; font-weight: 800;
+    color: var(--text-dark); margin: 0;
+  }
+
+  .edit-sub {
+    font-size: 11px; color: var(--text-muted); margin: 2px 0 0;
+  }
+
+  /* Fields */
+  .field-group {
+    display: flex; flex-direction: column; gap: 5px;
+    margin-bottom: 16px;
+  }
+
+  .field-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .field-input,
+  .field-textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--card-bg2);
+    background: var(--card-bg2);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; color: var(--text-dark);
+    outline: none; box-sizing: border-box;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .field-input:focus,
+  .field-textarea:focus {
+    border-color: var(--purple);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(139,136,200,0.1);
+  }
+
+  .field-input::placeholder,
+  .field-textarea::placeholder { color: #c8b8c8; }
+
+  .field-textarea {
+    resize: vertical; min-height: 90px; line-height: 1.5;
+  }
+
+  /* Two-col row for hours */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Input with unit badge */
+  .input-with-badge {
+    position: relative;
+  }
+
+  .input-badge {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px; font-weight: 700;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    padding: 2px 7px; border-radius: 8px;
+    pointer-events: none;
+  }
+
+  .input-with-badge .field-input { padding-right: 48px; }
+
+  /* Divider */
+  .form-divider {
+    height: 1px; background: var(--card-bg2);
+    margin: 20px 0;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex; gap: 10px;
+  }
+
+  .btn {
+    padding: 11px 24px;
+    border-radius: 20px; border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+
+  .btn-primary {
+    background: var(--purple); color: white;
+    box-shadow: 0 4px 14px rgba(139,136,200,0.3);
+    flex: 1; justify-content: center;
+  }
+  .btn-primary:hover { background: #6b68a8; box-shadow: 0 6px 18px rgba(139,136,200,0.4); }
+
+  .btn-secondary {
+    background: var(--card-bg2); color: var(--text-dark);
+  }
+  .btn-secondary:hover { background: #ddd0dc; }
+
+  /* ─── Deco panel ─── */
+  .edit-deco {
+    background: var(--card-bg2);
+    border-radius: 24px;
+    padding: 28px 24px;
+    display: flex; flex-direction: column;
+    gap: 14px;
+    position: relative; overflow: hidden;
+  }
+
+  .deco-blob {
+    position: absolute; border-radius: 50%;
+    background: rgba(139,136,200,0.15);
+    pointer-events: none;
+  }
+  .deco-blob-1 { width: 160px; height: 160px; top: -50px; right: -50px; }
+  .deco-blob-2 { width: 100px; height: 100px; bottom: 30px; left: -30px; background: rgba(201,184,200,0.2); }
+
+  .deco-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; position: relative; z-index: 1;
+  }
+
+  /* Current task info */
+  .current-task-box {
+    background: var(--card-bg);
+    border-radius: 16px; padding: 16px;
+    position: relative; z-index: 1;
+  }
+
+  .ct-title {
+    font-size: 15px; font-weight: 800;
+    color: var(--text-dark); margin-bottom: 10px;
+  }
+
+  .ct-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .ct-row:last-child { margin-bottom: 0; }
+
+  .ct-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .ct-info { font-size: 11px; color: var(--text-muted); }
+  .ct-info strong { color: var(--text-dark); font-weight: 700; }
+
+  /* Progress ring */
+  .deco-ring-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    position: relative; z-index: 1;
+  }
+
+  .ring-container { position: relative; width: 90px; height: 90px; }
+  .ring-container svg { transform: rotate(-90deg); }
+  .ring-pct {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 16px; font-weight: 800; color: var(--text-dark);
+  }
+  .ring-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+  /* Tips */
+  .tip-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 12px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    position: relative; z-index: 1;
+  }
+
+  .tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .tip-text { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .tip-text strong { color: var(--text-dark); font-weight: 700; }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+</style>
+
+<div class="edit-wrap">
+
+  <!-- ── Left: form ── -->
+  <div class="edit-card">
+    <div class="edit-header">
+      <div class="edit-icon">✏️</div>
+      <div>
+        <h2 class="edit-title">Edit Task</h2>
+        <p class="edit-sub">Update the details for this task</p>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('edit_task', task_id=task.id) }}">
+
+      <div class="field-group">
+        <label class="field-label">Task Title</label>
+        <input class="field-input" type="text" name="title"
+               value="{{ task.title }}" placeholder="e.g. Database Assignment" required>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Description</label>
+        <textarea class="field-textarea" name="description"
+                  placeholder="Add any notes or details…">{{ task.description }}</textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Deadline</label>
+        <input class="field-input" type="date" name="deadline"
+               value="{{ task.deadline }}" required>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group" style="margin-bottom:0;">
+          <label class="field-label">Total Effort</label>
+          <div class="input-with-badge">
+            <input class="field-input" type="number" step="0.1" min="0"
+                   name="total_effort_hours" value="{{ task.total_effort_hours }}" required>
+            <span class="input-badge">hrs</span>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:0;">
+          <label class="field-label">Remaining Effort</label>
+          <div class="input-with-badge">
+            <input class="field-input" type="number" step="0.1" min="0"
+                   name="remaining_effort_hours" value="{{ task.remaining_effort_hours }}" required>
+            <span class="input-badge">hrs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="btn-row">
+        <a href="{{ url_for('course_detail', course_id=task.course_id) }}"
+           class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ── Right: deco panel ── -->
+  <div class="edit-deco">
+    <div class="deco-blob deco-blob-1"></div>
+    <div class="deco-blob deco-blob-2"></div>
+
+    <p class="deco-label">Current Task Info</p>
+
+    <!-- Task snapshot -->
+    <div class="current-task-box">
+      <div class="ct-title">{{ task.title | truncate(28, True, '…') }}</div>
+      <div class="ct-row">
+        <div class="ct-dot" style="background:var(--purple);"></div>
+        <div class="ct-info">Deadline: <strong>{{ task.deadline.strftime('%d %b %Y') }}</strong></div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-dot" style="background:var(--pink);"></div>
+        <div class="ct-info">Remaining: <strong>{{ task.remaining_effort_hours }}h</strong> of {{ task.total_effort_hours }}h</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-dot" style="background:var(--gold);"></div>
+        <div class="ct-info">
+          {% set today_date = task.deadline %}
+          Status:
+          {% if task.remaining_effort_hours == 0 %}
+            <strong style="color:#3a8050;">Completed ✓</strong>
+          {% elif task.remaining_effort_hours < task.total_effort_hours %}
+            <strong style="color:var(--purple);">In Progress</strong>
+          {% else %}
+            <strong style="color:var(--text-muted);">Not Started</strong>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress ring -->
+    <div class="deco-ring-wrap">
+      {% set pct = (((task.total_effort_hours - task.remaining_effort_hours) / task.total_effort_hours) * 100) | round | int if task.total_effort_hours > 0 else 0 %}
+      {% set r = 36 %}
+      {% set circ = 2 * 3.14159 * r %}
+      {% set dash = circ * (1 - pct / 100) %}
+      <div class="ring-container">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle fill="none" stroke="rgba(139,136,200,0.15)"
+                  stroke-width="8" cx="45" cy="45" r="{{ r }}"/>
+          <circle fill="none" stroke="var(--purple)"
+                  stroke-width="8" stroke-linecap="round"
+                  cx="45" cy="45" r="{{ r }}"
+                  stroke-dasharray="{{ circ }}"
+                  stroke-dashoffset="{{ dash }}"/>
+        </svg>
+        <div class="ring-pct">{{ pct }}%</div>
+      </div>
+      <div class="ring-label">Work completed</div>
+    </div>
+
+    <!-- Tips -->
+    <div class="tip-item">
+      <span class="tip-icon">💡</span>
+      <div class="tip-text"><strong>Tip:</strong> Keep remaining hours accurate — it drives your daily effort suggestions on the dashboard.</div>
+    </div>
+    <div class="tip-item">
+      <span class="tip-icon">📅</span>
+      <div class="tip-text"><strong>Deadline:</strong> Extending the deadline reduces your daily effort load automatically.</div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

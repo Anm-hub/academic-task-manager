@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Left: main settings area ── */
+  .settings-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 20px;
+  }
+  .settings-main::-webkit-scrollbar { width: 0; }
+
+  /* Page header */
+  .settings-header {
+    flex-shrink: 0;
+  }
+  .settings-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+  .settings-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Section cards */
+  .s-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .s-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .s-card-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .s-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  /* Avatar row */
+  .avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--card-bg2);
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+
+  .settings-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: white;
+    flex-shrink: 0;
+  }
+
+  .avatar-info { flex: 1; }
+  .avatar-name { font-size: 15px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+  .avatar-email { font-size: 11px; color: var(--text-muted); }
+
+  /* Info rows */
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--card-bg2);
+    margin-bottom: 10px;
+  }
+  .info-row:last-of-type { margin-bottom: 0; }
+
+  .info-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .info-value { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+
+  /* Divider */
+  .s-divider {
+    height: 1px;
+    background: var(--card-bg2);
+    margin: 16px 0;
+  }
+
+  /* Edit fields */
+  .edit-section { display: flex; flex-direction: column; gap: 10px; }
+
+  .edit-group { display: flex; flex-direction: column; gap: 5px; }
+
+  .edit-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .edit-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--card-bg2);
+    background: var(--card-bg2);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: var(--text-dark);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .edit-input:focus {
+    border-color: var(--purple);
+    background: white;
+  }
+  .edit-input::placeholder { color: #c8b8c8; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+
+  .s-btn {
+    padding: 9px 20px;
+    border-radius: 20px;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  }
+  .s-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139,136,200,0.25);
+  }
+  .btn-primary:hover { background: #6b68a8; }
+
+  .btn-secondary {
+    background: var(--card-bg2);
+    color: var(--text-dark);
+  }
+  .btn-secondary:hover { background: #ddd0dc; }
+
+  .btn-danger {
+    background: #f5d5da;
+    color: #c06070;
+  }
+  .btn-danger:hover { background: #f0b8c2; box-shadow: 0 4px 12px rgba(192,96,112,0.2); }
+
+  /* Password strength bar */
+  .strength-bar-track {
+    height: 5px;
+    background: var(--card-bg2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .strength-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+  }
+  .strength-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Right sidebar */
+  .settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-bottom: 40px;
+  }
+  .settings-sidebar::-webkit-scrollbar { width: 3px; }
+  .settings-sidebar::-webkit-scrollbar-thumb { background: #d8ccd8; border-radius: 3px; }
+
+  /* Data management items */
+  .data-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 14px;
+    background: var(--card-bg2);
+    margin-bottom: 10px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  .data-item:last-child { margin-bottom: 0; }
+  .data-item:hover { transform: translateX(3px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+  .data-item-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+
+  .data-item-info { flex: 1; }
+  .data-item-title { font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+  .data-item-sub   { font-size: 10px; color: var(--text-muted); }
+
+  .data-item-arrow { font-size: 13px; color: var(--text-muted); }
+
+  /* Danger zone */
+  .danger-zone {
+    border: 1.5px solid #f5d5da;
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 4px;
+  }
+
+  .danger-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #c06070;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .danger-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  /* Stats row in sidebar */
+  .mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .mini-stat {
+    background: var(--card-bg2);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .mini-stat-num {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .mini-stat-label { font-size: 10px; color: var(--text-muted); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .s-card:nth-child(1) { animation-delay: 0.05s; }
+  .s-card:nth-child(2) { animation-delay: 0.10s; }
+  .s-card:nth-child(3) { animation-delay: 0.15s; }
+</style>
+
+<!-- ── LEFT: main ── -->
+<div class="settings-main">
+
+  <!-- Header -->
+  <div class="settings-header">
+    <h2 class="settings-title">Settings</h2>
+    <p class="settings-sub">Manage your account and preferences</p>
+  </div>
+
+  <!-- Account Information -->
+  <div class="s-card" style="animation-delay:0.05s">
+    <div class="s-card-header">
+      <div class="s-card-icon" style="background:#ddd8f5;">👤</div>
+      <h3 class="s-card-title">Account Information</h3>
+    </div>
+
+    <!-- Avatar + name -->
+    <div class="avatar-row">
+      <div class="settings-avatar">{{ current_user.username[0].upper() }}</div>
+      <div class="avatar-info">
+        <div class="avatar-name">{{ current_user.username }}</div>
+        <div class="avatar-email">{{ current_user.email }}</div>
+      </div>
+    </div>
+
+    <!-- Current info rows -->
+    <div class="info-row">
+      <div>
+        <div class="info-label">Username</div>
+        <div class="info-value">{{ current_user.username }}</div>
+      </div>
+    </div>
+    <div class="info-row" style="margin-top:10px;">
+      <div>
+        <div class="info-label">Email Address</div>
+        <div class="info-value">{{ current_user.email }}</div>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Edit fields -->
+    <div class="edit-section">
+      <div class="edit-group">
+        <label class="edit-label">Edit Username</label>
+        <input class="edit-input" type="text" placeholder="New username" value="{{ current_user.username }}">
+      </div>
+      <div class="edit-group">
+        <label class="edit-label">Change Email</label>
+        <input class="edit-input" type="email" placeholder="New email address" value="{{ current_user.email }}">
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="s-btn btn-primary">💾 Save Changes</button>
+      <button class="s-btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Password & Security -->
+  <div class="s-card" style="animation-delay:0.10s">
+    <div class="s-card-header">
+      <div class="s-card-icon" style="background:#f0ddf0;">🔒</div>
+      <h3 class="s-card-title">Password & Security</h3>
+    </div>
+
+    <div class="edit-section">
+      <div class="edit-group">
+        <label class="edit-label">Current Password</label>
+        <input class="edit-input" type="password" placeholder="Enter current password" id="currPass">
+      </div>
+      <div class="edit-group">
+        <label class="edit-label">New Password</label>
+        <input class="edit-input" type="password" placeholder="Enter new password" id="newPass" oninput="checkStrength(this.value)">
+        <div class="strength-bar-track"><div class="strength-bar-fill" id="strengthBar"></div></div>
+        <div class="strength-hint" id="strengthHint">Enter a new password</div>
+      </div>
+      <div class="edit-group">
+        <label class="edit-label">Confirm New Password</label>
+        <input class="edit-input" type="password" placeholder="Confirm new password">
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="s-btn btn-primary">🔑 Update Password</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── RIGHT: sidebar ── -->
+<div class="settings-sidebar">
+
+  <!-- Account snapshot -->
+  <div class="s-card" style="animation-delay:0.08s">
+    <div class="s-card-header">
+      <div class="s-card-icon" style="background:#f5ecd8;">📊</div>
+      <h3 class="s-card-title">Your Activity</h3>
+    </div>
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <div class="mini-stat-num" style="color:var(--purple);">{{ current_user.courses|length if current_user.courses is defined else '–' }}</div>
+        <div class="mini-stat-label">Courses</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-num" style="color:var(--pink);">{{ current_user.tasks|length if current_user.tasks is defined else '–' }}</div>
+        <div class="mini-stat-label">Tasks</div>
+      </div>
+    </div>
+    <div class="info-row">
+      <div>
+        <div class="info-label">Member since</div>
+        <div class="info-value" style="font-size:12px;">Smartech Student</div>
+      </div>
+      <span style="font-size:18px;">🎓</span>
+    </div>
+  </div>
+
+  <!-- Data Management -->
+  <div class="s-card" style="animation-delay:0.12s">
+    <div class="s-card-header">
+      <div class="s-card-icon" style="background:#d5edd8;">🗂️</div>
+      <h3 class="s-card-title">Data Management</h3>
+    </div>
+
+    <a href="#" class="data-item">
+      <div class="data-item-icon" style="background:#ddd8f5;">📥</div>
+      <div class="data-item-info">
+        <div class="data-item-title">Export Tasks</div>
+        <div class="data-item-sub">Download my task data</div>
+      </div>
+      <span class="data-item-arrow">→</span>
+    </a>
+
+    <a href="#" class="data-item">
+      <div class="data-item-icon" style="background:#f5ecd8;">📦</div>
+      <div class="data-item-info">
+        <div class="data-item-title">Export All Data</div>
+        <div class="data-item-sub">Courses, tasks & progress logs</div>
+      </div>
+      <span class="data-item-arrow">→</span>
+    </a>
+
+    <div class="s-divider"></div>
+
+    <!-- Danger zone -->
+    <div class="danger-zone">
+      <div class="danger-label">⚠ Danger Zone</div>
+      <p class="danger-desc">Permanently removes all your courses, tasks, and progress logs. This cannot be undone.</p>
+      <button class="s-btn btn-danger" style="width:100%; justify-content:center;">🗑 Delete Account</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function checkStrength(val) {
+    const bar  = document.getElementById('strengthBar');
+    const hint = document.getElementById('strengthHint');
+    let score  = 0;
+    if (val.length >= 8)            score++;
+    if (/[A-Z]/.test(val))          score++;
+    if (/[0-9]/.test(val))          score++;
+    if (/[^A-Za-z0-9]/.test(val))   score++;
+
+    const levels = [
+      { w: '15%',  bg: '#f5d5da', txt: 'Too short' },
+      { w: '35%',  bg: '#f5d5da', txt: 'Weak' },
+      { w: '60%',  bg: var_gold,  txt: 'Fair' },
+      { w: '80%',  bg: var_gold,  txt: 'Good' },
+      { w: '100%', bg: '#a8d8a8', txt: 'Strong 💪' },
+    ];
+
+    // Read CSS variables
+    const style = getComputedStyle(document.documentElement);
+    const var_gold = style.getPropertyValue('--gold').trim() || '#e8c46a';
+
+    const lvl = levels[Math.min(score, 4)];
+    if (!val) { bar.style.width = '0%'; hint.textContent = 'Enter a new password'; return; }
+    bar.style.width      = lvl.w;
+    bar.style.background = score >= 2 ? (score >= 4 ? '#a8d8a8' : var_gold) : '#f5d5da';
+    hint.textContent     = lvl.txt;
+  }
+
+  // Fix var reference order
+  (function(){
+    const orig = window.checkStrength;
+    window.checkStrength = function(val) {
+      const style   = getComputedStyle(document.documentElement);
+      const gold    = style.getPropertyValue('--gold').trim() || '#e8c46a';
+      const bar     = document.getElementById('strengthBar');
+      const hint    = document.getElementById('strengthHint');
+      let score     = 0;
+      if (val.length >= 8)           score++;
+      if (/[A-Z]/.test(val))         score++;
+      if (/[0-9]/.test(val))         score++;
+      if (/[^A-Za-z0-9]/.test(val))  score++;
+      if (!val) { bar.style.width='0%'; hint.textContent='Enter a new password'; return; }
+      const colors = ['#f5d5da','#f5d5da', gold, gold,'#a8d8a8'];
+      const labels = ['Too short','Weak','Fair','Good','Strong 💪'];
+      const widths = ['15%','35%','60%','80%','100%'];
+      bar.style.width      = widths[score];
+      bar.style.background = colors[score];
+      hint.textContent     = labels[score];
+    };
+  })();
+</script>
+{% endblock %}

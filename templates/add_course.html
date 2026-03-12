@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Add Course{% endblock %}
+{% block content %}
+
+<style>
+  /* Fills the two-column grid from base.html — modal sits in left col, decorative panel in right */
+  .add-course-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .add-course-right {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Decorative blobs in right panel */
+  .add-course-right::before {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(146,143,206,0.18) 0%, transparent 70%);
+    top: -60px;
+    right: -60px;
+  }
+
+  .add-course-right::after {
+    content: '';
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,142,142,0.12) 0%, transparent 70%);
+    bottom: -40px;
+    left: -30px;
+  }
+
+  /* The card */
+  .form-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 36px 32px 28px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+    position: relative;
+  }
+
+  .form-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .form-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2a2a2a;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .form-card-subtitle {
+    font-size: 12px;
+    color: #bbb;
+    margin: 4px 0 0;
+    font-weight: 400;
+  }
+
+  .close-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f4f0eb;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 16px;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+    line-height: 1;
+  }
+
+  .close-btn:hover { background: #ede7e1; color: #555; }
+
+  /* Fields */
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 7px;
+    letter-spacing: 0.02em;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ede9e3;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #2a2a2a;
+    background: #faf8f5;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    box-sizing: border-box;
+  }
+
+  .field-input::placeholder { color: #c8c2bb; }
+
+  .field-input:focus {
+    border-color: #928fce;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(146,143,206,0.12);
+  }
+
+  /* Buttons row */
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 26px;
+  }
+
+  .btn-reset {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid #ede9e3;
+    background: transparent;
+    color: #888;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .btn-reset:hover { background: #f4f0eb; border-color: #ddd8d0; color: #555; }
+
+  .btn-confirm {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: #928fce;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(146,143,206,0.35);
+  }
+
+  .btn-confirm:hover {
+    background: #7b78bc;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(146,143,206,0.45);
+  }
+
+  .btn-confirm:active { transform: translateY(0); }
+
+  /* Right panel decorative content */
+  .deco-illustration {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .deco-icon-stack {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+  }
+
+  .deco-circle {
+    position: absolute;
+    border-radius: 50%;
+  }
+
+  .deco-circle-lg {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(146,143,206,0.15), rgba(146,143,206,0.05));
+    border: 2px solid rgba(146,143,206,0.2);
+    top: 0; left: 0;
+  }
+
+  .deco-circle-sm {
+    width: 44px;
+    height: 44px;
+    background: #928fce;
+    bottom: 0;
+    right: -4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(146,143,206,0.4);
+  }
+
+  .deco-main-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    font-size: 44px;
+  }
+
+  .deco-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2a2a2a;
+    margin-bottom: 8px;
+  }
+
+  .deco-desc {
+    font-size: 11px;
+    color: #bbb;
+    line-height: 1.6;
+    max-width: 180px;
+    margin: 0 auto;
+  }
+
+  .deco-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .deco-tag {
+    background: rgba(146,143,206,0.1);
+    color: #928fce;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(146,143,206,0.2);
+  }
+
+  /* Entrance animation */
+  .form-card {
+    animation: cardIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .deco-illustration {
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<!-- Left column: the form card -->
+<div class="add-course-left">
+  <div class="form-card">
+    <div class="form-card-header">
+      <div>
+        <h2 class="form-card-title">Add New Course</h2>
+        <p class="form-card-subtitle">Fill in the details below to enrol</p>
+      </div>
+      <a href="{{ url_for('courses') }}" class="close-btn" title="Cancel">✕</a>
+    </div>
+
+    <form method="POST">
+      <div class="field-group">
+        <label class="field-label" for="course_code">Course ID</label>
+        <input
+          class="field-input"
+          type="text"
+          id="course_code"
+          name="course_code"
+          placeholder="e.g. CS101"
+          required
+        >
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="course_name">Course Name</label>
+        <input
+          class="field-input"
+          type="text"
+          id="course_name"
+          name="course_name"
+          placeholder="e.g. Introduction to Computer Science"
+          required
+        >
+      </div>
+
+      <div class="form-actions">
+        <button type="reset" class="btn-reset">Reset</button>
+        <button type="submit" class="btn-confirm">Confirm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Right column: decorative panel -->
+<div class="add-course-right">
+  <div class="deco-illustration">
+    <div class="deco-icon-stack">
+      <div class="deco-circle deco-circle-lg"></div>
+      <div class="deco-main-icon">🎓</div>
+      <div class="deco-circle deco-circle-sm">➕</div>
+    </div>
+    <div class="deco-title">Grow your curriculum</div>
+    <p class="deco-desc">Add courses to track your tasks, deadlines, and study progress all in one place.</p>
+    <div class="deco-tags">
+      <span class="deco-tag">Track tasks</span>
+      <span class="deco-tag">Set deadlines</span>
+      <span class="deco-tag">Log progress</span>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
