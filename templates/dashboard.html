@@ -344,9 +344,9 @@
         {% for task in upcoming_tasks[:3] %}
         <div class="list-item">
           <div class="list-avatar" style="
-            {% if loop.index == 1 %}background:#928fce;
-            {% elif loop.index == 2 %}background:#d98fa0;
-            {% else %}background:#e8c46a;{% endif %}
+            {% if loop.index == 1 %}background: id=#928fce;
+            {% elif loop.index == 2 %}background: id=#d98fa0;
+            {% else %}background: id=#e8c46a;{% endif %}
           ">{{ task.title[0].upper() }}</div>
           <div class="list-main">
             <div class="list-title">{{ task.title | truncate(22,True,'…') }}</div>

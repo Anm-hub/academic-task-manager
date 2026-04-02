@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – Smartech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple:#8b88c8; --purple-dark:#6b68a8;
+      --pink:#c9b8c8; --gold:#e8c46a;
+      --bg-main:#ede8e3; --card-bg:#faf5f0; --card-bg2:#e8dde8;
+      --sidebar-bg:#1f2937;
+      --text-dark:#2d1f2c; --text-muted:#a090a0;
+      --green:#3a8050; --green-bg:#d5eedd;
+      --red:#c06070; --red-bg:#f5d5da;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    nav {
+      width: 210px;
+      background: var(--sidebar-bg);
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .admin-logo { font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 5px; }
+    .admin-badge { font-size: 9px; font-weight: 600; background: var(--purple); color: white; padding: 2px 10px; border-radius: 20px; text-align: center; margin-bottom: 18px; }
+    .admin-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--pink)); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: white; margin: 0 auto 6px; box-shadow: 0 4px 14px rgba(139,136,200,0.4); }
+    .admin-name { text-align: center; font-size: 12px; font-weight: 600; color: white; margin-bottom: 2px; }
+    .admin-role { text-align: center; font-size: 10px; color: #9ca3af; margin-bottom: 20px; }
+    .nav-section { font-size: 9px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; padding-left: 10px; margin-top: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 10px; text-decoration: none; font-size: 12px; color: #d1d5db; margin-bottom: 3px; transition: background 0.2s, color 0.2s; }
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .nav-item.active { background: var(--purple); color: white; font-weight: 600; }
+    .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+    .nav-divider { height: 1px; background: #374151; margin: 12px 0; }
+    .logout-btn { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 10px; text-decoration: none; font-size: 12px; color: #f87171; margin-top: auto; transition: background 0.2s; }
+    .logout-btn:hover { background: rgba(248,113,113,0.1); }
+
+    /* ── Main — no scroll ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 22px;
+      gap: 14px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ── Page header ── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .page-title { font-size: 20px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.02em; }
+    .page-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .header-date { font-size: 11px; color: var(--text-muted); background: var(--card-bg); padding: 7px 14px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── KPI strip ── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display: flex; flex-direction: column; gap: 8px;
+      position: relative; overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+    .kpi-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; border-radius: 0 0 16px 16px; }
+    .kpi-card:nth-child(1)::after { background: var(--purple); }
+    .kpi-card:nth-child(2)::after { background: var(--green); }
+    .kpi-card:nth-child(3)::after { background: var(--gold); }
+    .kpi-card:nth-child(4)::after { background: var(--red); }
+    .kpi-card:nth-child(5)::after { background: var(--purple); }
+    .kpi-card:nth-child(1) { animation-delay: 0.04s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.08s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.12s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.16s; }
+    .kpi-card:nth-child(5) { animation-delay: 0.20s; }
+    .kpi-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .kpi-num { font-size: 24px; font-weight: 800; color: var(--text-dark); line-height: 1; }
+    .kpi-label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Content row ── */
+    .content-row {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Cards ── */
+    .a-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      animation: fadeUp 0.4s ease both;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .card-title {
+      font-size: 12px; font-weight: 700; color: var(--text-dark);
+      margin-bottom: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .view-all { font-size: 11px; font-weight: 600; color: var(--purple); text-decoration: none; }
+    .view-all:hover { color: var(--purple-dark); }
+
+    /* ── Left column: table + performers ── */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    /* Student table */
+    .table-card {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .table-scroll { overflow-y: auto; flex: 1; }
+    .table-scroll::-webkit-scrollbar { width: 3px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: #d8ccd8; border-radius: 3px; }
+
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--card-bg2); position: sticky; top: 0; background: var(--card-bg); }
+    .user-table td { font-size: 11px; color: var(--text-dark); padding: 9px 10px; border-bottom: 1px solid var(--card-bg2); vertical-align: middle; }
+    .user-table tr:last-child td { border-bottom: none; }
+    .user-table tbody tr:hover td { background: var(--card-bg2); transition: background 0.15s; }
+
+    .u-avatar { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; margin-right: 7px; vertical-align: middle; }
+    .mini-bar-track { height: 4px; background: var(--card-bg2); border-radius: 3px; overflow: hidden; width: 60px; display: inline-block; vertical-align: middle; margin-right: 5px; }
+    .mini-bar-fill { height: 100%; border-radius: 3px; background: var(--purple); }
+    .badge { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+    .badge-red    { background: var(--red-bg); color: var(--red); }
+    .badge-green  { background: var(--green-bg); color: var(--green); }
+    .badge-purple { background: #ddd8f5; color: #6b68a8; }
+
+    /* Top performers */
+    .performers-card { flex-shrink: 0; }
+    .activity-item { display: flex; align-items: flex-start; gap: 9px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--card-bg2); }
+    .activity-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    .act-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .act-text { font-size: 11px; color: var(--text-dark); line-height: 1.5; }
+    .act-time { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── Right column: donut + quick stats ── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .ring-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0 10px; }
+    .ring-container { position: relative; width: 100px; height: 100px; }
+    .ring-container svg { transform: rotate(-90deg); }
+    .ring-pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 20px; font-weight: 800; color: var(--text-dark); }
+    .ring-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 8px; }
+
+    .breakdown { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .breakdown-row { display: flex; align-items: center; gap: 7px; }
+    .b-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .b-label { font-size: 10px; color: var(--text-muted); flex: 1; }
+    .b-val { font-size: 10px; font-weight: 700; color: var(--text-dark); }
+
+    .q-stat { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--card-bg2); border-radius: 12px; margin-bottom: 8px; transition: transform 0.15s; }
+    .q-stat:last-child { margin-bottom: 0; }
+    .q-stat:hover { transform: translateX(3px); }
+    .q-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .q-num { font-size: 15px; font-weight: 800; color: var(--text-dark); line-height: 1; }
+    .q-lbl { font-size: 9px; color: var(--text-muted); }
+
+    /* Hamburger — hidden on desktop */
+    .hamburger {
+      display: none;
+      position: fixed; top: 14px; left: 14px; z-index: 200;
+      width: 38px; height: 38px; border-radius: 11px;
+      background: var(--purple); border: none; cursor: pointer;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      box-shadow: 0 4px 12px rgba(139,136,200,0.4);
+    }
+    .hamburger span { display: block; width: 16px; height: 2px; background: white; border-radius: 2px; transition: transform 0.3s, opacity 0.3s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 99; backdrop-filter: blur(2px); }
+    .nav-overlay.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ════════ TABLET ════════ */
+    @media (max-width: 1024px) {
+      .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+      .content-row { grid-template-columns: 1fr; overflow-y: auto; }
+      .right-col { flex-direction: row; flex-wrap: wrap; }
+      .right-col .a-card { flex: 1; min-width: 200px; }
+    }
+
+    /* ════════ MOBILE ════════ */
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: auto; overflow: auto; }
+
+      nav {
+        position: fixed; top: 0; left: 0; height: 100vh;
+        transform: translateX(-100%); width: 230px; padding-top: 65px;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+      }
+      nav.nav-open { transform: translateX(0); }
+      .hamburger { display: flex; }
+
+      main {
+        padding: 68px 14px 24px !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        gap: 12px;
+      }
+
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .content-row { grid-template-columns: 1fr; overflow: visible; }
+      .left-col, .right-col { gap: 12px; }
+      .right-col { flex-direction: column; }
+      .right-col .a-card { min-width: unset; }
+      .table-card { min-height: unset; }
+      .user-table { display: block; overflow-x: auto; white-space: nowrap; }
+      .page-title { font-size: 18px; }
+      .kpi-num { font-size: 20px; }
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 62px 10px 20px !important; }
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .kpi-card { padding: 12px 10px; }
+      .kpi-num { font-size: 18px; }
+      .page-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="nav-overlay" id="adminOverlay" onclick="toggleNav()"></div>
+
+<!-- Sidebar -->
+<nav id="adminNav">
+  <div class="admin-logo">Smartech</div>
+  <div class="admin-badge">Administrator</div>
+  <div class="admin-avatar">A</div>
+  <div class="admin-name">Admin</div>
+  <div class="admin-role">System Administrator</div>
+  <div class="nav-section">Overview</div>
+  <a href="{{ url_for('admin_dashboard') }}" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+  <div class="nav-section" style="margin-top:8px;">Manage</div>
+  <a href="{{ url_for('admin_users') }}" class="nav-item"><span class="nav-icon">👥</span> Users</a>
+  <a href="{{ url_for('admin_courses') }}" class="nav-item"><span class="nav-icon">📚</span> Courses</a>
+  <div class="nav-divider"></div>
+  <a href="{{ url_for('logout') }}" class="logout-btn"><span class="nav-icon">🚪</span> Log out</a>
+</nav>
+
+<!-- Main -->
+<main>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Admin Dashboard</h2>
+      <p class="page-sub">System-wide analytics and student activity overview</p>
+    </div>
+    <div class="header-date">📅 {{ today.strftime('%A, %d %B %Y') }}</div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#ddd8f5;">👥</div>
+      <div class="kpi-num">{{ total_users }}</div>
+      <div class="kpi-label">Total Students</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#d5eedd;">📚</div>
+      <div class="kpi-num">{{ total_courses }}</div>
+      <div class="kpi-label">Total Courses</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#fdf0d0;">✏️</div>
+      <div class="kpi-num">{{ total_tasks }}</div>
+      <div class="kpi-label">Total Tasks</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#f5d5da;">⚠️</div>
+      <div class="kpi-num" style="color:var(--red);">{{ overdue_count }}</div>
+      <div class="kpi-label">Overdue Tasks</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#d5eedd;">✅</div>
+      <div class="kpi-num" style="color:var(--green);">{{ completion_rate }}%</div>
+      <div class="kpi-label">Completion Rate</div>
+    </div>
+  </div>
+
+  <!-- Content row -->
+  <div class="content-row">
+
+    <!-- Left: table + top performers -->
+    <div class="left-col">
+
+      <!-- Student table -->
+      <div class="a-card table-card" style="animation-delay:0.1s;">
+        <div class="card-title">
+          Student Overview
+          <a href="{{ url_for('admin_users') }}" class="view-all">View all →</a>
+        </div>
+        <div class="table-scroll">
+          {% if user_stats %}
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Courses</th>
+                <th>Tasks</th>
+                <th>Overdue</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set av_colors = ['#8b88c8','#c9b8c8','#e8c46a','#a8c8a8','#d9a3b3'] %}
+              {% for s in user_stats %}
+              <tr>
+                <td>
+                  <span class="u-avatar" style="background:{{ av_colors[loop.index0 % 5] }};">
+                    {{ s.user.username[0].upper() }}
+                  </span>
+                  {{ s.user.username }}
+                </td>
+                <td><span class="badge badge-purple">{{ s.course_count }}</span></td>
+                <td>{{ s.task_count }}</td>
+                <td>
+                  {% if s.overdue_count > 0 %}
+                    <span class="badge badge-red">{{ s.overdue_count }}</span>
+                  {% else %}
+                    <span class="badge badge-green">0</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="mini-bar-track">
+                    <div class="mini-bar-fill" style="width:{{ s.completion }}%;"></div>
+                  </div>
+                  <span style="font-size:10px; font-weight:600;">{{ s.completion }}%</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p style="font-size:12px; color:var(--text-muted); text-align:center; padding:24px 0;">No students yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Top performers -->
+      <div class="a-card performers-card" style="animation-delay:0.15s;">
+        <div class="card-title">Top Performers</div>
+        {% if user_stats %}
+          {% for s in (user_stats | sort(attribute='completion', reverse=True))[:3] %}
+          <div class="activity-item">
+            <div class="act-dot" style="background:
+              {% if s.completion >= 80 %}var(--green)
+              {% elif s.completion >= 40 %}var(--purple)
+              {% else %}var(--pink){% endif %};"></div>
+            <div>
+              <div class="act-text">
+                <strong>{{ s.user.username }}</strong> — {{ s.completion }}% across {{ s.task_count }} task{{ 's' if s.task_count != 1 }}
+              </div>
+              <div class="act-time">
+                {{ s.course_count }} course{{ 's' if s.course_count != 1 }} ·
+                {% if s.overdue_count > 0 %}
+                  <span style="color:var(--red);">{{ s.overdue_count }} overdue</span>
+                {% else %}
+                  <span style="color:var(--green);">No overdue tasks</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="font-size:11px; color:var(--text-muted); text-align:center; padding:16px 0;">No data yet.</p>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Right: donut + quick stats -->
+    <div class="right-col">
+
+      <!-- System health donut -->
+      <div class="a-card" style="animation-delay:0.12s;">
+        <div class="card-title">System Health</div>
+        <div class="ring-wrap">
+          {% set r = 42 %}
+          {% set circ = 2 * 3.14159 * r %}
+          {% set dash = circ * (1 - completion_rate / 100) %}
+          <div class="ring-container">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle fill="none" stroke="var(--card-bg2)" stroke-width="10" cx="50" cy="50" r="{{ r }}"/>
+              <circle fill="none" stroke="var(--purple)" stroke-width="10" stroke-linecap="round"
+                      cx="50" cy="50" r="{{ r }}"
+                      stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ dash }}"/>
+            </svg>
+            <div class="ring-pct">{{ completion_rate }}%</div>
+          </div>
+          <div class="ring-sub">Overall completion</div>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-row">
+            <div class="b-dot" style="background:var(--green);"></div>
+            <div class="b-label">On Track</div>
+            <div class="b-val">{{ total_tasks - overdue_count }}</div>
+          </div>
+          <div class="breakdown-row">
+            <div class="b-dot" style="background:var(--red);"></div>
+            <div class="b-label">Overdue</div>
+            <div class="b-val">{{ overdue_count }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="a-card" style="animation-delay:0.18s;">
+        <div class="card-title">Quick Stats</div>
+        <div class="q-stat">
+          <div class="q-icon" style="background:#d5eedd;">✅</div>
+          <div>
+            <div class="q-num" style="color:var(--green);">{{ total_tasks - overdue_count }}</div>
+            <div class="q-lbl">Tasks on track</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script>
+  function toggleNav() {
+    const nav       = document.getElementById('adminNav');
+    const overlay   = document.getElementById('adminOverlay');
+    const hamburger = document.getElementById('hamburger');
+    const isOpen    = nav.classList.toggle('nav-open');
+    overlay.classList.toggle('visible', isOpen);
+    hamburger.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+
+  function checkHamburger() {
+    document.getElementById('hamburger').style.display =
+      window.innerWidth <= 768 ? 'flex' : 'none';
+  }
+  window.addEventListener('resize', checkHamburger);
+  checkHamburger();
+
+  document.querySelectorAll('#adminNav .nav-item, #adminNav .logout-btn').forEach(item => {
+    item.addEventListener('click', () => {
+      if (document.getElementById('adminNav').classList.contains('nav-open')) toggleNav();
+    });
+  });
+</script>
+</body>
+</html>

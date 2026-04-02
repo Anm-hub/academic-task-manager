@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block title %}Verify OTP — Smartech{% endblock %}
+
+{% block content %}
+<style>
+  /* Override base.html main grid */
+  body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  body > main {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-template-columns: unset !important;
+    padding: 20px !important;
+    height: 100vh !important;
+    overflow: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .otp-wrapper {
+    width: 100%;
+    max-width: 820px;
+    background: var(--card-bg);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(100,70,100,0.12);
+    display: flex;
+    min-height: 480px;
+    animation: authIn 0.5s cubic-bezier(0.34,1.2,0.64,1) both;
+  }
+
+  @keyframes authIn {
+    from { opacity: 0; transform: scale(0.96) translateY(16px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+  }
+
+  /* ── Left deco panel ── */
+  .auth-deco {
+    width: 42%;
+    background: var(--purple);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 30px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .auth-deco::before {
+    content: '';
+    position: absolute;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    top: -80px; right: -80px;
+  }
+
+  .auth-deco::after {
+    content: '';
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    bottom: -50px; left: -50px;
+  }
+
+  .deco-logo {
+    font-size: 22px; font-weight: 800;
+    color: white; margin-bottom: 32px;
+    position: relative; z-index: 1;
+    letter-spacing: -0.01em;
+  }
+  .deco-logo span { color: rgba(255,255,255,0.65); }
+
+  .deco-icon-ring {
+    position: relative; z-index: 1;
+    width: 110px; height: 110px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .deco-icon-emoji { font-size: 52px; }
+
+  .deco-tagline {
+    position: relative; z-index: 1;
+    font-size: 14px; font-weight: 700;
+    color: white; text-align: center;
+    line-height: 1.4; margin-bottom: 8px;
+  }
+
+  .deco-sub {
+    position: relative; z-index: 1;
+    font-size: 11px; color: rgba(255,255,255,0.7);
+    text-align: center; line-height: 1.6;
+    max-width: 180px;
+  }
+
+  .deco-dots {
+    position: relative; z-index: 1;
+    display: flex; gap: 6px; margin-top: 24px;
+  }
+  .deco-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .deco-dot.active {
+    background: white; width: 22px; border-radius: 4px;
+  }
+
+  /* ── Right form panel ── */
+  .otp-form-side {
+    flex: 1;
+    padding: 48px 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .otp-title {
+    font-size: 26px; font-weight: 800;
+    color: var(--text-dark); letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .otp-subtitle {
+    font-size: 12px; color: var(--text-muted);
+    margin-bottom: 32px; font-weight: 400;
+    line-height: 1.6;
+  }
+
+  /* Flash messages */
+  .flash-error {
+    background: #f5d5da;
+    color: #c06070;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* OTP input boxes */
+  .otp-input-group {
+    margin-bottom: 24px;
+  }
+
+  .otp-label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    color: #7a607a; letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  /* Single styled OTP input */
+  .otp-input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid var(--card-bg2);
+    border-radius: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+    background: white;
+    outline: none;
+    text-align: center;
+    letter-spacing: 0.3em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+  .otp-input::placeholder {
+    color: #d8ccd8;
+    letter-spacing: 0.2em;
+    font-size: 18px;
+  }
+  .otp-input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 4px rgba(139,136,200,0.15);
+  }
+
+  /* Expiry note */
+  .otp-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Submit button */
+  .otp-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: var(--purple);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(139,136,200,0.35);
+    position: relative; z-index: 10;
+  }
+  .otp-btn:hover {
+    background: var(--purple-dark, #6b68a8);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(139,136,200,0.45);
+  }
+  .otp-btn:active { transform: translateY(0); }
+
+  /* Back link */
+  .back-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--purple); }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    body > main { padding: 16px !important; height: auto !important; }
+    .otp-wrapper { flex-direction: column; min-height: unset; }
+    .auth-deco { width: 100%; padding: 30px 20px; min-height: 160px; }
+    .deco-icon-ring { width: 70px; height: 70px; margin-bottom: 10px; }
+    .deco-icon-emoji { font-size: 32px; }
+    .otp-form-side { padding: 28px 24px; }
+    .otp-input { font-size: 18px; padding: 14px; }
+  }
+</style>
+
+<div class="otp-wrapper">
+
+  <!-- Left deco -->
+  <div class="auth-deco">
+    <div class="deco-logo">Smart<span>ech</span></div>
+    <div class="deco-icon-ring">
+      <span class="deco-icon-emoji">🔐</span>
+    </div>
+    <div class="deco-tagline">Two-Step Verification</div>
+    <p class="deco-sub">We sent a 6-digit code to your email to keep your account secure.</p>
+    <div class="deco-dots">
+      <div class="deco-dot"></div>
+      <div class="deco-dot active"></div>
+      <div class="deco-dot"></div>
+    </div>
+  </div>
+
+  <!-- Right form -->
+  <div class="otp-form-side">
+    <h1 class="otp-title">Enter OTP</h1>
+    <p class="otp-subtitle">
+      Check your email for a 6-digit verification code.<br>
+      It expires in <strong>5 minutes</strong>.
+    </p>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="otp-input-group">
+        <label class="otp-label" for="otp">VERIFICATION CODE</label>
+        <input
+          class="otp-input"
+          type="text"
+          id="otp"
+          name="otp"
+          placeholder="● ● ● ● ● ●"
+          maxlength="6"
+          inputmode="numeric"
+          pattern="[0-9]{6}"
+          autocomplete="one-time-code"
+          required
+          autofocus
+        >
+        <div class="otp-note">⏱ Code expires in 5 minutes</div>
+      </div>
+
+      <button type="submit" class="otp-btn">Verify &amp; Sign In</button>
+    </form>
+
+    <a href="{{ url_for('login') }}" class="back-link">
+      ← Back to login
+    </a>
+  </div>
+
+</div>
+{% endblock %}

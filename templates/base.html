@@ -3,21 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}êCoursie{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>{% block title %}Smartech{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Main accent — matches login button #7b78b8 */
-            --purple: #8b88c8;
-            /* Soft secondary accents */
-            --pink: #c9b8c8;
-            --gold: #e8c46a;
-            /* Backgrounds — matches login body/form palette */
+            --purple:     #8b88c8;
+            --pink:       #c9b8c8;
+            --gold:       #e8c46a;
             --bg-main:    #ede8e3;
             --card-bg:    #faf5f0;
             --card-bg2:   #e8dde8;
             --sidebar-bg: #ddd0dc;
-            /* Text */
             --text-dark:  #2d1f2c;
             --text-muted: #a090a0;
         }
@@ -27,15 +23,14 @@
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-main);
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             display: flex;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
         }
 
-        /* Sidebar */
+        /* ── Sidebar (desktop) ── */
         nav {
             width: 200px;
             background-color: var(--sidebar-bg);
@@ -44,9 +39,15 @@
             flex-direction: column;
             flex-shrink: 0;
             border-right: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+            z-index: 100;
         }
 
-        .logo { font-size: 22px; font-weight: 700; color: #3d2b3c; margin-bottom: 25px; text-align: center; }
+        .logo {
+            font-size: 22px; font-weight: 700;
+            color: #3d2b3c; margin-bottom: 25px;
+            text-align: center;
+        }
 
         .user-profile { text-align: center; margin-bottom: 30px; }
         .user-profile div:first-child {
@@ -58,15 +59,18 @@
         .nav-links { flex-grow: 1; }
 
         .nav-item {
-            display: flex; align-items: center; padding: 10px 15px;
-            color: #5a3d59; text-decoration: none; border-radius: 12px;
-            margin-bottom: 5px; font-size: 13px;
+            display: flex; align-items: center;
+            padding: 10px 15px;
+            color: #5a3d59; text-decoration: none;
+            border-radius: 12px; margin-bottom: 5px;
+            font-size: 13px;
             transition: background 0.2s ease, transform 0.15s ease;
         }
         .nav-item:hover { transform: translateX(3px); }
         .nav-item.active { background: var(--purple); color: white; font-weight: 600; }
         .nav-item:hover:not(.active) { background: rgba(139,136,200,0.15); }
 
+        /* ── Main content area ── */
         main {
             flex: 1;
             display: grid;
@@ -76,6 +80,7 @@
             height: 100%;
             overflow: hidden;
             box-sizing: border-box;
+            min-width: 0;
         }
 
         .glass-card {
@@ -88,27 +93,185 @@
         }
 
         h4 { margin: 0 0 10px 0; font-size: 15px; }
+
+        /* ── Hamburger button ── */
+        /* Hidden on desktop, shown on mobile.
+           Those 3 lines = the "hamburger" 🍔 that toggles the sidebar */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 14px; left: 14px;
+            z-index: 200;
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: var(--purple);
+            border: none;
+            cursor: pointer;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            box-shadow: 0 4px 12px rgba(139,136,200,0.4);
+        }
+        .hamburger span {
+            display: block;
+            width: 18px; height: 2px;
+            background: white; border-radius: 2px;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        /* Animate 3 lines → X when open */
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* ── Dark overlay behind open sidebar ── */
+        .nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 99;
+            backdrop-filter: blur(2px);
+        }
+        .nav-overlay.visible { display: block; }
+
+        /* ════════════════════════════════
+           TABLET — 900px and below
+           ════════════════════════════════ */
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr 220px;
+                gap: 14px;
+                padding: 16px;
+            }
+        }
+
+        /* ════════════════════════════════
+           MOBILE — 768px and below
+           ════════════════════════════════ */
+        @media (max-width: 768px) {
+
+            /* Body becomes scrollable column */
+            body {
+                overflow: auto;
+                height: auto;
+                min-height: 100vh;
+                flex-direction: column;
+            }
+
+            /* Sidebar hides off-screen to the left */
+            nav {
+                position: fixed;
+                top: 0; left: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                width: 220px;
+                padding-top: 70px;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            }
+
+            /* Slides in when .nav-open is added by JS */
+            nav.nav-open { transform: translateX(0); }
+
+            /* Show the hamburger button */
+            .hamburger { display: flex; }
+
+            /* Main becomes single scrollable column */
+            main {
+                display: flex !important;
+                flex-direction: column !important;
+                grid-template-columns: unset !important;
+                width: 100%;
+                height: auto !important;
+                min-height: 100vh;
+                overflow: visible !important;
+                padding: 70px 14px 24px 14px !important;
+                gap: 0 !important;
+            }
+        }
+
+        /* ════════════════════════════════
+           SMALL PHONE — 480px and below
+           ════════════════════════════════ */
+        @media (max-width: 480px) {
+            main { padding: 64px 10px 20px 10px !important; }
+            .logo { font-size: 18px; }
+            .nav-item { font-size: 12px; padding: 9px 12px; }
+        }
     </style>
 </head>
 <body>
-    {% if current_user.is_authenticated and request.endpoint not in ['login','register'] %}
-    <nav>
+
+    {% if current_user.is_authenticated and request.endpoint not in ['login', 'register', 'verify_otp'] %}
+
+    <!-- Hamburger button — only visible on mobile -->
+    <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Dark overlay — tapping it closes the sidebar on mobile -->
+    <div class="nav-overlay" id="navOverlay" onclick="toggleNav()"></div>
+
+    <nav id="sidebar">
         <div class="logo">Smartech</div>
         <div class="user-profile">
             <div></div>
-            <div style="font-weight:600; font-size: 14px; color: #3d2b3c;">{{ current_user.username }}</div>
+            <div style="font-weight:600; font-size:14px; color:#3d2b3c;">
+                {{ current_user.username }}
+            </div>
         </div>
         <div class="nav-links">
-            <a href="{{ url_for('dashboard') }}" class="nav-item active">Dashboard</a>
-            <a href="{{ url_for('courses') }}" class="nav-item">My classes</a>
-            <a href="{{ url_for('schedule') }}" class="nav-item">Schedule</a>
-            <a href="{{ url_for('settings') }}" class="nav-item">Settings</a>
+            <a href="{{ url_for('dashboard') }}"
+               class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+               Dashboard
+            </a>
+            <a href="{{ url_for('courses') }}"
+               class="nav-item {% if request.endpoint in ['courses', 'course_detail'] %}active{% endif %}">
+               My classes
+            </a>
+            <a href="{{ url_for('schedule') }}"
+               class="nav-item {% if request.endpoint == 'schedule' %}active{% endif %}">
+               Schedule
+            </a>
+            <a href="{{ url_for('settings') }}"
+               class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+               Settings
+            </a>
         </div>
         <a href="{{ url_for('logout') }}" class="nav-item">Log out</a>
     </nav>
+
     {% endif %}
+
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <script>
+        function toggleNav() {
+            const sidebar    = document.getElementById('sidebar');
+            const overlay    = document.getElementById('navOverlay');
+            const hamburger  = document.getElementById('hamburger');
+            if (!sidebar) return;
+            const isOpen = sidebar.classList.toggle('nav-open');
+            overlay.classList.toggle('visible', isOpen);
+            hamburger.classList.toggle('open', isOpen);
+            // Prevent background scrolling while nav is open
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+
+        // Auto-close sidebar when a nav link is tapped on mobile
+        document.querySelectorAll('#sidebar .nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && sidebar.classList.contains('nav-open')) {
+                    toggleNav();
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>

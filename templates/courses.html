@@ -292,6 +292,69 @@
   .course-row:nth-child(4) { animation-delay: 0.20s; }
   .course-row:nth-child(5) { animation-delay: 0.25s; }
   .course-row:nth-child(6) { animation-delay: 0.30s; }
+
+  /* ════════════════════════════════════════
+     MOBILE RESPONSIVE
+     ════════════════════════════════════════ */
+
+  /* Tablet: 768px and below */
+  @media (max-width: 768px) {
+
+    /* courses-main takes full width, no overflow hidden */
+    .courses-main {
+      overflow: visible;
+      padding: 20px 16px 16px;
+      margin-bottom: 16px;
+    }
+
+    /* Sidebar flows below the course list */
+    .courses-sidebar {
+      overflow-y: visible;
+      padding-bottom: 20px;
+    }
+
+    /* Thumb smaller on mobile */
+    .course-thumb {
+      width: 56px;
+      height: 52px;
+    }
+    .thumb-letter { font-size: 22px; }
+
+    .course-name  { font-size: 13px; }
+    .courses-title { font-size: 18px; }
+
+    /* Prevent hover transform on touch */
+    .course-row:hover {
+      transform: none;
+    }
+  }
+
+  /* Phone: 480px and below */
+  @media (max-width: 480px) {
+
+    .courses-main { padding: 16px 12px 12px; }
+
+    .courses-title { font-size: 16px; }
+    .add-course-link { font-size: 11px; }
+
+    .course-thumb { width: 46px; height: 44px; border-radius: 10px; }
+    .thumb-letter { font-size: 18px; }
+
+    .course-name  { font-size: 12px; }
+    .course-meta  { font-size: 10px; margin-bottom: 4px; }
+    .course-tag   { font-size: 9px; padding: 2px 7px; }
+
+    .course-row   { padding: 12px; gap: 10px; }
+
+    /* Stack stats row on small screens */
+    .stats-row { flex-direction: column; gap: 8px; }
+
+    .filter-tab { font-size: 12px; }
+
+    .panel-card { padding: 16px; }
+    .panel-title { font-size: 12px; }
+    .action-btn { font-size: 11px; padding: 10px 12px; }
+  }
 </style>
 
 <!-- Left: course list -->
