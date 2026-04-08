@@ -8,9 +8,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     MAIL_SERVER = "smtp.gmail.com"
-    MAIL_PORT = 465
-    MAIL_USE_TLS = False
-    MAIL_USE_SSL = True
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
     MAIL_USERNAME = "christinelaws23@gmail.com"
     MAIL_PASSWORD = "mcscmzsxxuuhuqil"
     MAIL_TIMEOUT = 10
