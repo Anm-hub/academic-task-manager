@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import pyotp
 
 db = SQLAlchemy()
 
@@ -15,10 +15,9 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     courses = db.relationship('Course', backref='user', lazy=True)
     tasks = db.relationship('Task', backref='user', lazy=True)
-    otp_code = db.Column(db.String(6), nullable=True)
-    otp_expiry = db.Column(db.DateTime, nullable=True)
+    otp_secret = db.Column(db.String(32), nullable=True)
 
-    # ✅ Add these methods
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 

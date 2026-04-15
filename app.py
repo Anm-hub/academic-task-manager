@@ -1,13 +1,16 @@
-from flask_mail import Mail, Message
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, redirect, url_for, request, session, flash
 from config import Config
+import pyotp
+import qrcode
+import io
+import base64
+from flask_mail import Mail, Message
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Course, Task, ProgressLog
-from datetime import datetime, date
 from functools import wraps
-import random
-from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -66,14 +69,61 @@ def register():
         password = request.form.get("password")
 
         hashed_password = generate_password_hash(password)
-        user = User(username=username, email=email, password_hash=hashed_password)
+        
+        
+
+        user = User(
+            username=username,
+            email=email,
+            password_hash=hashed_password
+            
+        )
+
 
         db.session.add(user)
         db.session.commit()
 
-        return redirect(url_for("login"))
+        session["setup_user_id"] = user.id
+        return redirect(url_for("setup_2fa"))
 
     return render_template("register.html")
+
+@app.route("/setup-2fa", methods=["GET"])
+def setup_2fa():
+    user_id = session.get("setup_user_id")
+
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get_or_404(user_id)
+
+    # If user already has a secret, don’t regenerate (VERY IMPORTANT)
+    if not user.otp_secret:
+        secret = pyotp.random_base32()
+        user.otp_secret = secret
+        db.session.commit()
+
+    # Create TOTP object
+    totp = pyotp.TOTP(user.otp_secret)
+
+    # Generate QR provisioning URI
+    uri = totp.provisioning_uri(
+        name=user.email,
+        issuer_name="Academic Task Manager"
+    )
+
+    # Generate QR image
+    img = qrcode.make(uri)
+
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return render_template(
+        "setup_2fa.html",
+        qr_code=qr_base64
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -85,43 +135,54 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password_hash, password):
-            otp = generate_otp()
-            user.otp_code = otp
-            user.otp_expiry = datetime.utcnow() + timedelta(minutes=5)
-            db.session.commit()
 
-            try:
-                 send_otp_email(user.email, otp)
-                 print(f"✅ OTP email sent to {user.email}")
-            except Exception as e:
-                 print(f"⚠️  Email failed ({e}) — OTP for {user.username}: {otp}")
+            # Safety check (avoid broken accounts)
+            if not user.otp_secret:
+                secret = pyotp.random_base32()
+                user.otp_secret = secret
+                db.session.commit()
 
-            return redirect(url_for("verify_otp", user_id=user.id))
+                session["setup_user_id"] = user.id
+                return redirect(url_for("setup_2fa"))
+
+            # store user temporarily until OTP verified
+            session["pre_2fa_user_id"] = user.id
+
+            return redirect(url_for("verify_otp"))
+
+        flash("Invalid username or password", "danger")
 
     return render_template("login.html")
 
 
-@app.route("/verify-otp/<int:user_id>", methods=["GET", "POST"])
-def verify_otp(user_id):
-    user = User.query.get_or_404(user_id)
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def verify_otp():
+    user_id = session.get("pre_2fa_user_id")
+
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
+
+    if not user or not user.otp_secret:
+        return redirect(url_for("login"))
 
     if request.method == "POST":
-        entered_otp = request.form.get("otp")
+        otp = request.form.get("otp")
 
-        if user.otp_code == entered_otp and user.otp_expiry > datetime.utcnow():
-            # ✅ OTP correct → NOW log user in
+        totp = pyotp.TOTP(user.otp_secret)
+
+        if totp.verify(otp, valid_window=1):
             login_user(user)
 
-            # clear OTP after use (VERY important)
-            user.otp_code = None
-            user.otp_expiry = None
-            db.session.commit()
+            session.pop("pre_2fa_user_id", None)
 
             if user.is_admin:
                 return redirect(url_for("admin_dashboard"))
             return redirect(url_for("dashboard"))
-        else:
-            flash("Invalid or expired OTP", "danger")
+
+        flash("Invalid authentication code", "danger")
 
     return render_template("verify_otp.html")
 
@@ -508,15 +569,21 @@ if __name__ == "__main__":
         db.create_all()
 
         # Create admin user if one doesn't exist yet
+        import pyotp
         if not User.query.filter_by(username="admin").first():
+            secret = pyotp.random_base32()
+
             admin = User(
                 username="admin",
                 email="anastaciamwangi12@gmail.com",
                 password_hash=generate_password_hash("smartech2025"),
-                is_admin=True
+                is_admin=True,
+                otp_secret=secret
             )
+
             db.session.add(admin)
             db.session.commit()
-            print("✅ Admin user created: admin / smartech2025")
+
+            print("🔐 ADMIN OTP SECRET (scan once):", secret)
 
     app.run(debug=True)
